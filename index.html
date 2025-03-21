@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #74ebd5, #acb6e5);
+            color: #333;
+            padding: 20px;
+        }
+        h1 { color: white; }
+        textarea {
+            width: 80%;
+            height: 120px;
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            margin-top: 15px;
+            padding: 12px 25px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+        #result, #history { margin-top: 20px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Mental Health Emotion Tracker</h1>
+    <textarea id="userInput" placeholder="How are you feeling today?"></textarea><br>
+    <button onclick="analyzeEmotion()">Analyze</button>
+    <div id="result"></div>
+    <div id="history"></div>
+
+    <script>
+        function analyzeEmotion() {
+            let text = document.getElementById("userInput").value;
+
+            if (text.trim() === "") {
+                alert("Please enter some text.");
+                return;
+            }
+
+            fetch("http://127.0.0.1:5000/analyze", {  // ✅ FIXED API URL
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").innerHTML = `
+                    <p><strong>Emotion:</strong> ${data.emotion}</p>
+                    <p><strong>Score:</strong> ${data.score.toFixed(2)}</p>
+                    <p><strong>Recommendation:</strong> ${data.recommendation}</p>
+                `;
+                fetchHistory();  // ✅ Update History after new entry
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Something went wrong. Please try again.");
+            });
+        }
+
+        function fetchHistory() {
+            fetch("http://127.0.0.1:5000/history")  // ✅ FIXED URL
+            .then(response => response.json())
+            .then(data => {
+                let historyHTML = "<h2>Previous Entries</h2>";
+                data.forEach(entry => {
+                    historyHTML += `<p><strong>Text:</strong> ${entry.text} <br>
+                                    <strong>Emotion:</strong> ${entry.emotion} <br>
+                                    <strong>Score:</strong> ${entry.score.toFixed(2)} <br>
+                                    <strong>Recommendation:</strong> ${entry.recommendation}</p><hr>`;
+                });
+                document.getElementById("history").innerHTML = historyHTML;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        window.onload = fetchHistory;  // ✅ Load history on page load
+    </script>
+</body>
+</html>
